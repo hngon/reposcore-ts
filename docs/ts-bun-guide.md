@@ -17,32 +17,28 @@ Node.js 대신 TypeScript를 별도 컴파일 없이 직접 실행할 수 있으
 
 ---
 
-##  Codespaces에서 Bun 설치
+## Codespaces에서 Bun 설치 및 확인
 
-Codespaces 환경에는 Bun이 기본적으로 설치되어 있지 않습니다.
-터미널을 열고 아래 명령으로 설치합니다.
+본 프로젝트의 GitHub Codespaces 환경(` .devcontainer/devcontainer.json`)에는 **Bun 자동 설치 설정**이 포함되어 있습니다. 따라서 별도의 수동 설치 과정 없이 바로 사용이 가능합니다.
 
-```bash
-curl -fsSL https://bun.sh/install | bash
-```
-
-설치 완료 후 터미널을 **새로 열거나** 아래 명령으로 즉시 적용합니다.
-
-```bash
-source ~/.bashrc
-```
-
-### 버전 확인
+### 설치 여부 확인
+Codespaces가 생성된 후 터미널을 열고 아래 명령어로 설치 여부를 확인합니다.
 
 ```bash
 bun --version
-# 1.3.13
-```
+# 예상 출력: 1.3.13 (또는 최신 버전)
 
 > **참고:** Codespaces를 재시작하면 Bun이 초기화되어 다시 설치해야 할 수 있습니다.
 > 매번 재설치가 번거롭다면 팀에서 `devcontainer.json`의 `postCreateCommand`에
 > 설치 명령을 등록하는 것을 고려하세요.
 
+만약 Bun 명령이 인식되지 않는 경우에는 터미널을 새로 열거나 아래 명령으로 환경 변수를 다시 적용할 수 있습니다.
+
+source ~/.bashrc
+
+필요한 경우에만 아래 명령으로 Bun을 수동 설치할 수 있습니다.
+
+curl -fsSL https://bun.sh/install | bash
 ---
 
 ##  의존성 설치
