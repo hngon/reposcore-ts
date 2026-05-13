@@ -92,8 +92,8 @@ const result = await githubGraphQL<IssuesResponse>(
   }
   `,
   {
-    owner: "oss2025hnu",
-    repo: "reposcore-cs",
+    owner: "oss2026hnu",
+    repo: "reposcore-ts",
   }
 );
 
@@ -122,8 +122,8 @@ const result = await githubGraphQL<PullRequestsResponse>(
   }
   `,
   {
-    owner: "oss2025hnu",
-    repo: "reposcore-cs",
+    owner: "oss2026hnu",
+    repo: "reposcore-ts",
   }
 );
 
@@ -153,8 +153,8 @@ const result = await githubGraphQL(
   }
   `,
   {
-    owner: "oss2025hnu",
-    repo: "reposcore-cs",
+    owner: "oss2026hnu",
+    repo: "reposcore-ts",
   }
 );
 ```
