@@ -1,40 +1,38 @@
 # reposcore-ts
 
-A CLI for scoring student participation in an open-source class repo, implemented in TypeScript using GraphQL.
+`reposcore-ts`는 GraphQL을 사용하여 오픈소스 수업 저장소의 학생 참여 점수를 계산하는 **TypeScript 기반 CLI**입니다.
+
 
 ## Usage
 
-Install dependencies:
+### 의존성 설치
 
 ```bash
 bun install
 ```
 
-Run the CLI:
+### CLI 실행
+
+여러 개의 저장소를 한 번에 분석할 수 있습니다.
 
 ```bash
-bun run index.ts <owner/repo> [options]
+# 기본 실행 예시
+bun run index.ts <owner/repo...> [options]
+
+# GitHub 개인 액세스 토큰(PAT) 사용 예시
+bun run index.ts oss2026hnu/reposcore-ts --token YOUR_GITHUB_TOKEN
 ```
-
-Example:
-
-```bash
-bun run index.ts oss2026hnu/reposcore-ts --format csv
-```
-
-You can also pass a GitHub Personal Access Token with `--token`:
-
-```bash
-bun run index.ts oss2026hnu/reposcore-ts --token your_token --format txt
-```
-
-If you do not pass a token with `--token`, set the `GITHUB_TOKEN` environment variable before running the CLI.
 
 ## Synopsis
 
 ```text
-For more info, run any command with the `--help` flag:
-  $ reposcore-ts --help
+reposcore-ts
+
+Usage:
+  $ reposcore-ts [...repos]
+
+Commands:
+  [...repos]  대상 저장소 목록 (예: owner/repo1 owner/repo2)
 
 Options:
   --token <token>    GitHub Personal Access Token (default: $GITHUB_TOKEN)
