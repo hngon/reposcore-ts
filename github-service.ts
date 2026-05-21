@@ -52,10 +52,26 @@ interface RawPullRequest {
   labels: {nodes: RawLabel[]} | null;
 }
 
-interface DetailedRepoResponse {
+interface PageInfo {
+  hasNextPage: boolean;
+  endCursor: string | null;
+}
+
+interface IssuePageResponse {
   repository: {
-    issues: {nodes: RawIssue[]};
-    pullRequests: {nodes: RawPullRequest[]};
+    issues: {
+      nodes: RawIssue[];
+      pageInfo: PageInfo;
+    };
+  };
+}
+
+interface PullRequestPageResponse {
+  repository: {
+    pullRequests: {
+      nodes: RawPullRequest[];
+      pageInfo: PageInfo;
+    };
   };
 }
 
@@ -120,20 +136,6 @@ const toPrRecord = (raw: RawPullRequest): PRRecord => {
   };
 };
 
-// GraphQL 응답을 DetailedRepoData로 변환합니다.
-// 응답에 라벨이 없거나 인식되지 않는 경우 category는 'none'으로 설정됩니다.
-export const mapDetailedRepoResponse = (
-  response: DetailedRepoResponse,
-): DetailedRepoData => {
-  const issueNodes = response.repository.issues?.nodes ?? [];
-  const prNodes = response.repository.pullRequests?.nodes ?? [];
-
-  return {
-    issues: issueNodes.map(toIssueRecord),
-    prs: prNodes.map(toPrRecord),
-  };
-};
-
 // DetailedRepoData에서 카테고리별 개수를 집계합니다.
 export interface CategoryCounts {
   feature: number;
@@ -188,8 +190,124 @@ export const createGitHubService = (token: string) => {
     };
   };
 
-  // closed 이슈와 merged PR을 한 번의 GraphQL 요청으로 조회합니다.
-  // 라벨 정보를 포함하며, 응답 누락 시 안전하게 빈 값으로 처리됩니다.
+  const getAllClosedIssues = async (
+    owner: string,
+    repo: string,
+  ): Promise<IssueRecord[]> => {
+    const issues: IssueRecord[] = [];
+    let cursor: string | null = null;
+    let hasNextPage = true;
+
+    while (hasNextPage) {
+      const response: IssuePageResponse =
+        await githubGraphQL<IssuePageResponse>(
+        `
+        query(
+          $owner: String!
+          $repo: String!
+          $pageSize: Int!
+          $cursor: String
+        ) {
+          repository(owner: $owner, name: $repo) {
+            issues(
+              first: $pageSize
+              after: $cursor
+              states: CLOSED
+              orderBy: {field: CREATED_AT, direction: DESC}
+            ) {
+              nodes {
+                number
+                title
+                url
+                state
+                createdAt
+                closedAt
+                author { login }
+                labels(first: 20) { nodes { name } }
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+        }
+        `,
+        {owner, repo, pageSize: PAGE_SIZE, cursor},
+      );
+
+      const connection: IssuePageResponse['repository']['issues'] =
+        response.repository.issues;
+
+      issues.push(...connection.nodes.map(toIssueRecord));
+
+      cursor = connection.pageInfo.endCursor;
+      hasNextPage = connection.pageInfo.hasNextPage && cursor !== null;
+    }
+
+    return issues;
+  };
+
+  const getAllMergedPullRequests = async (
+    owner: string,
+    repo: string,
+  ): Promise<PRRecord[]> => {
+    const prs: PRRecord[] = [];
+    let cursor: string | null = null;
+    let hasNextPage = true;
+
+    while (hasNextPage) {
+      const response: PullRequestPageResponse =
+       await githubGraphQL<PullRequestPageResponse>(
+        `
+        query(
+          $owner: String!
+          $repo: String!
+          $pageSize: Int!
+          $cursor: String
+        ) {
+          repository(owner: $owner, name: $repo) {
+            pullRequests(
+              first: $pageSize
+              after: $cursor
+              states: MERGED
+              orderBy: {field: CREATED_AT, direction: DESC}
+            ) {
+              nodes {
+                number
+                title
+                url
+                merged
+                mergedAt
+                additions
+                deletions
+                author { login }
+                labels(first: 20) { nodes { name } }
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+        }
+        `,
+        {owner, repo, pageSize: PAGE_SIZE, cursor},
+      );
+
+      const connection: PullRequestPageResponse['repository']['pullRequests'] =
+       response.repository.pullRequests;
+
+      prs.push(...connection.nodes.map(toPrRecord));
+
+      cursor = connection.pageInfo.endCursor;
+      hasNextPage = connection.pageInfo.hasNextPage && cursor !== null;
+    }
+
+    return prs;
+  };
+
+  // closed 이슈와 merged PR을 각각 cursor 기반 페이지네이션으로 조회합니다.
   // useCache=true(기본)이면 .cache/<owner>_<repo>.json을 읽어 재사용하고,
   // 캐시가 없거나 useCache=false이면 API를 호출한 뒤 결과를 저장합니다.
   const getDetailedRepoData = async (
@@ -200,42 +318,15 @@ export const createGitHubService = (token: string) => {
     const cached = await loadCache<DetailedRepoData>(owner, repo, !useCache);
     if (cached) return cached.data;
 
-    const response = await githubGraphQL<DetailedRepoResponse>(
-      `
-      query($owner: String!, $repo: String!, $pageSize: Int!) {
-        repository(owner: $owner, name: $repo) {
-          issues(first: $pageSize, states: CLOSED, orderBy: {field: CREATED_AT, direction: DESC}) {
-            nodes {
-              number
-              title
-              url
-              state
-              createdAt
-              closedAt
-              author { login }
-              labels(first: 20) { nodes { name } }
-            }
-          }
-          pullRequests(first: $pageSize, states: MERGED, orderBy: {field: CREATED_AT, direction: DESC}) {
-            nodes {
-              number
-              title
-              url
-              merged
-              mergedAt
-              additions
-              deletions
-              author { login }
-              labels(first: 20) { nodes { name } }
-            }
-          }
-        }
-      }
-      `,
-      {owner, repo, pageSize: PAGE_SIZE},
-    );
+    const [issues, prs] = await Promise.all([
+      getAllClosedIssues(owner, repo),
+      getAllMergedPullRequests(owner, repo),
+    ]);
 
-    const data = mapDetailedRepoResponse(response);
+    const data: DetailedRepoData = {
+      issues,
+      prs,
+    };
 
     await saveCache(owner, repo, data);
 
