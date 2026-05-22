@@ -13,7 +13,7 @@ bun install
 
 ### CLI 실행
 
-여러 개의 저장소를 한 번에 분석할 수 있습니다. 기본 실행 시 사용자별 점수가 CSV로 stdout에 출력됩니다(헤더: `userId,prFeatureBug,prDocs,prTypo,issueFeatureBug,issueDocs,totalScore`).
+여러 개의 저장소를 한 번에 분석할 수 있습니다.
 
 ```bash
 # 기본 실행 예시
@@ -44,6 +44,7 @@ For more info, run any command with the `--help` flag:
 Options:
   --token <token>    GitHub Personal Access Token (default: $GITHUB_TOKEN)
   --format <format>  출력 형식 (csv, txt) (default: csv)
+  --no-cache         캐시를 무시하고 GitHub API를 새로 호출합니다 (default: true)
   -h, --help         Display this message
 ```
 <!-- SYNOPSIS_END -->
@@ -53,10 +54,9 @@ Options:
 Synopsis 섹션은 CLI 도움말을 자동으로 반영합니다. 프로그램 옵션 또는 실행 방식이 변경되면 다음 명령어로 업데이트하세요:
 
 ```bash
-# 개별 업데이트
-python tools/update-synopsis.py
+make synopsis
 ```
 
 > ⚠️ `README.md`를 직접 수정하지 마세요.
-> 수동 편집 내용은 `README-template.md`에서 관리하며, `README.md`는 `tools/update-synopsis.py`를 통해 자동 생성됩니다.
+> 수동 편집 내용은 `README-template.md`에서 관리하며, `README.md`는 `make synopsis`를 통해 자동 생성됩니다.
 > 프로그램 옵션, 인수, 또는 도움말 출력이 변경된 경우 반드시 위 명령어를 실행하여 `README.md`를 다시 생성하세요.

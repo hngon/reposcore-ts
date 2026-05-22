@@ -37,10 +37,9 @@ bun run index.ts oss2026hnu/reposcore-ts --token YOUR_GITHUB_TOKEN
 Synopsis 섹션은 CLI 도움말을 자동으로 반영합니다. 프로그램 옵션 또는 실행 방식이 변경되면 다음 명령어로 업데이트하세요:
 
 ```bash
-# 개별 업데이트
-python tools/update-synopsis.py
+make synopsis
 ```
 
 > ⚠️ `README.md`를 직접 수정하지 마세요.
-> 수동 편집 내용은 `README-template.md`에서 관리하며, `README.md`는 `tools/update-synopsis.py`를 통해 자동 생성됩니다.
+> 수동 편집 내용은 `README-template.md`에서 관리하며, `README.md`는 `make synopsis`를 통해 자동 생성됩니다.
 > 프로그램 옵션, 인수, 또는 도움말 출력이 변경된 경우 반드시 위 명령어를 실행하여 `README.md`를 다시 생성하세요.
