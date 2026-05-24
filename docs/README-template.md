@@ -5,9 +5,12 @@
 
 ## 문서 목록
 
-<!-- DOC_LIST_START -->
-
-<!-- DOC_LIST_END -->
+{% if docs %}
+{% for doc in docs %}- [{{ doc.filename }}](./{{ doc.filename }}): {{ doc.title }}
+{% endfor %}
+{% else %}
+_아직 등록된 문서가 없습니다._
+{% endif %}
 
 ---
 > ⚠️ **문서 목록은 수작업으로 갱신하지 마세요.**
