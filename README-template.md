@@ -28,9 +28,9 @@ bun run index.ts oss2026hnu/reposcore-ts --token YOUR_GITHUB_TOKEN
 
 ## Synopsis
 
-<!-- SYNOPSIS_START -->
-
-<!-- SYNOPSIS_END -->
+```text
+{{ synopsis }}
+```
 
 ## Synopsis 업데이트
 

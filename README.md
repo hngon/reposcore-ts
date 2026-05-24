@@ -28,7 +28,6 @@ bun run index.ts oss2026hnu/reposcore-ts --token YOUR_GITHUB_TOKEN
 
 ## Synopsis
 
-<!-- SYNOPSIS_START -->
 ```text
 reposcore-ts
 
@@ -47,7 +46,6 @@ Options:
   --no-cache         캐시를 무시하고 GitHub API를 새로 호출합니다 (default: true)
   -h, --help         Display this message
 ```
-<!-- SYNOPSIS_END -->
 
 ## Synopsis 업데이트
 

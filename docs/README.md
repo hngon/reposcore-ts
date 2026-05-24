@@ -1,19 +1,16 @@
 # 프로젝트 운영 지침 및 개발 가이드
 
-> 점수 계산 공식, 이슈/PR 작성 주의사항, 도커 및 깃헙 사용법처럼
-> `reposcore-cs`와 공통으로 적용되는 내용은
+> 점수 계산 공식 및 이슈/PR 작성 주의사항 등 공통 사항은
 > [reposcore-cs 저장소](https://github.com/oss2026hnu/reposcore-cs)의 docs를 참고하세요.
 
 ## 문서 목록
 
-<!-- DOC_LIST_START -->
 - [cac-guide.md](./cac-guide.md): Cac 라이브러리 가이드
 - [octokit-guide.md](./octokit-guide.md): TypeScript/Bun 기반 GitHub GraphQL 가이드
 - [ts-bun-guide.md](./ts-bun-guide.md): TypeScript 및 실행 환경 Bun 가이드
 - [ts-convention.md](./ts-convention.md): TypeScript 코딩 컨벤션 가이드
 - [tsdoc-typedoc-guide.md](./tsdoc-typedoc-guide.md): TSDoc + TypeDoc 가이드
 - [vscode-extension.md](./vscode-extension.md): TypeScript 개발을 위한 VSCode 확장 가이드
-<!-- DOC_LIST_END -->
 
 ---
 > ⚠️ **문서 목록은 수작업으로 갱신하지 마세요.**
