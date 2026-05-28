@@ -21,7 +21,14 @@ export interface OutputPaths {
   txt: string;
 }
 
-// 향후 --output 옵션이 추가되어도 경로 조합 로직이 한곳에 모이도록 분리합니다.
+/**
+ * 출력 디렉토리와 서브 디렉토리 정보를 조합하여 최종 파일 저장 경로 객체를 생성합니다.
+ * 향후 --output 옵션이 추가되어도 경로 조합 로직이 한곳에 모이도록 분리합니다.
+ *
+ * @param outputDir 기본 출력 디렉토리 명 (기본값: 'output')
+ * @param subDir 추가적으로 지정할 하위 디렉토리 명 (선택 사항)
+ * @returns 생성된 CSV 및 TXT 파일의 경로 정보를 담은 OutputPaths 객체
+ */
 export const getOutputPaths = (
   outputDir: string = DEFAULT_OUTPUT_DIR,
   subDir?: string,
@@ -33,8 +40,14 @@ export const getOutputPaths = (
   };
 };
 
-// DetailedRepoData를 저장소별 카테고리 요약(RepoSummary)으로 변환합니다.
-// TXT 파일에서 가독성 있는 저장소별 블록을 생성하는 데 사용됩니다.
+/**
+ * DetailedRepoData를 저장소별 기여 카테고리 요약 정보(RepoSummary)로 변환합니다.
+ * TXT 파일에서 가독성 있는 저장소별 블록을 생성하는 데 사용됩니다.
+ *
+ * @param repoPath 대상 저장소의 경로 명 (예: 'owner/repo')
+ * @param detailed 이슈와 PR 목록을 포함한 저장소 상세 데이터
+ * @returns 카테고리별 기여 개수가 집계된 RepoSummary 객체
+ */
 export const summarizeRepo = (
   repoPath: string,
   detailed: DetailedRepoData,
@@ -61,8 +74,12 @@ const USER_CSV_HEADERS = [
   'totalScore',
 ] as const;
 
-// 사용자별 집계 점수를 CSV 텍스트로 만듭니다.
-// 헤더와 행 스키마는 README.md의 안내(기본 실행 시 사용자별 점수 CSV)와 동일합니다.
+/**
+ * 전체 사용자 점수 목록을 받아 CSV 파일에 기록할 텍스트 문자열을 빌드합니다.
+ *
+ * @param userScores 각 사용자별 점수 및 상세 기여 데이터 배열
+ * @returns CSV 형식으로 인코딩된 헤더와 데이터 문자열
+ */
 export const buildUserScoresCsv = (users: ReadonlyArray<UserScore>): string => {
   const rows = users.map(user => {
     let prFeatureBug = 0;
@@ -106,7 +123,13 @@ export const buildRepoSummariesTxt = (
   return blocks.join('\n\n') + '\n';
 };
 
-// 💡 추가된 함수: 사용자별 점수 집계 결과를 사람이 읽기 쉬운 TXT 블록으로 변환합니다.
+/**
+ * 저장소 요약 데이터 정보와 전체 사용자 점수 데이터를 가독성 있는 텍스트(TXT) 포맷 문자열로 빌드합니다.
+ *
+ * @param repos 저장소별 요약 기여 데이터 정보 배열
+ * @param userScores 전체 사용자별 최종 합산 점수 및 상세 기여 데이터 배열
+ * @returns 텍스트(TXT) 파일용 보고서 문자열
+ */
 export const buildUserScoresTxt = (users: ReadonlyArray<UserScore>): string => {
   const lines = users.map(user => {
     let prFeatureBug = 0;
@@ -134,8 +157,17 @@ export interface ScoreOutputData {
   repoSummaries: ReadonlyArray<RepoSummary>;
 }
 
-// CSV는 항상 생성하고, format이 'txt'인 경우 TXT를 추가로 생성합니다.
-// reposcore-cs와 동일한 사양을 따릅니다.
+/**
+ * 최종 결과 데이터를 기반으로 파일 시스템에 출력 파일을 작성합니다.
+ * CSV는 항상 생성하며, format 인자가 'txt'인 경우 TXT 파일도 함께 생성합니다.
+ * reposcore-cs와 동일한 사양을 따릅니다.
+ *
+ * @param format 생성할 파일의 포맷 형식 ('csv' 또는 'txt')
+ * @param data 최종 출력할 저장소 요약 및 사용자 점수 데이터 정보 객체
+ * @param outputDir 파일이 저장될 기본 출력 디렉토리 경로 (기본값: DEFAULT_OUTPUT_DIR)
+ * @param subDir 추가적으로 생성할 하위 디렉토리 명 (선택 사항)
+ * @returns 작성이 완료된 파일들의 경로 정보를 담은 Promise 객체
+ */
 export const writeOutputFiles = async (
   format: 'csv' | 'txt',
   data: ScoreOutputData,
