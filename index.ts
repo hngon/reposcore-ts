@@ -1,17 +1,13 @@
-import { cac } from "cac";
-import pkg from "./package.json" assert { type: "json"};
+import {cac} from 'cac';
+import pkg from './package.json' assert {type: 'json'};
 
 import {createGitHubService} from './github-service';
 import {ScoreCalculator, type RepoData} from './score-calculator';
 import {summarizeRepo, writeOutputFiles} from './output';
 import type {RepoSummary} from './output';
 
-const cli = cac("reposcore-ts");
+const cli = cac('reposcore-ts');
 cli.version(pkg.version);
-
-
-
-
 
 const supportedFormats = ['csv', 'txt'] as const;
 type SupportedFormat = (typeof supportedFormats)[number];
@@ -113,13 +109,19 @@ cli
             useCache,
           );
 
-          const repoData = ScoreCalculator.calculateRepoData(detailed, owner, repoName);
+          const repoData = ScoreCalculator.calculateRepoData(
+            detailed,
+            owner,
+            repoName,
+          );
           const repoSummary = summarizeRepo(repoPath, detailed);
 
           repoDataList.push(repoData);
           repoSummaries.push(repoSummary);
 
-          const singleUserScores = ScoreCalculator.calculateUserScores([repoData]);
+          const singleUserScores = ScoreCalculator.calculateUserScores([
+            repoData,
+          ]);
           const subDir = `${owner}-${repoName}`;
           const written = await writeOutputFiles(
             format as SupportedFormat,
