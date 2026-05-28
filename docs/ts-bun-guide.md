@@ -88,7 +88,7 @@ Bun 내장 테스트 러너를 사용합니다. Jest와 호환되는 API(`descri
 bun test
 
 # 특정 파일만 실행
-bun test src/github-service.test.ts
+bun test tests/score-calculator.test.ts
 ```
 
 Bun이 자동으로 감지하는 테스트 파일 규칙:
