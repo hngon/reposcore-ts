@@ -9,6 +9,7 @@ docs/README.md: $(DOCS_MD) docs/README-template.md tools/build-docs-data.py
 README.md: README-template.md index.ts tools/build-synopsis-data.py
 	$(PYTHON) tools/build-synopsis-data.py | $(JINJA2) --format json README-template.md -o README.md
 
-.PHONY: docs synopsis
+.PHONY: docs synopsis all
+all: docs synopsis
 docs: docs/README.md
 synopsis: README.md
