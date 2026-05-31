@@ -29,7 +29,7 @@ bun run index.ts oss2026hnu/reposcore-ts --token YOUR_GITHUB_TOKEN
 ## Synopsis
 
 ```text
-reposcore-ts
+reposcore-ts/1.0.0
 
 Usage:
   $ reposcore-ts [...repos]
@@ -41,10 +41,12 @@ For more info, run any command with the `--help` flag:
   $ reposcore-ts --help
 
 Options:
-  --token <token>    GitHub Personal Access Token (default: $GITHUB_TOKEN)
-  --format <format>  출력 형식 (csv, txt) (default: csv)
-  --no-cache         캐시를 무시하고 GitHub API를 새로 호출합니다 (default: true)
-  -h, --help         Display this message
+  --token <token>      GitHub Personal Access Token (default: $GITHUB_TOKEN)
+  --format <format>    출력 형식 (csv, txt) (default: csv)
+  --output-dir <path>  결과 파일을 저장할 디렉터리 (default: output)
+  --no-cache           캐시를 무시하고 GitHub API를 새로 호출합니다 (default: true)
+  -v, --version        Display version number 
+  -h, --help           Display this message
 ```
 
 ## Synopsis 업데이트
