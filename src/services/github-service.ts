@@ -5,7 +5,7 @@ import type {
   DetailedRepoData,
   IssueRecord,
   PRRecord,
-} from './types';
+} from '../types';
 
 import {loadCache, saveCache} from './cache';
 
@@ -47,7 +47,8 @@ const PAGE_SIZE = 100;
  */
 export const normalizeLabel = (label: string): ContributionLabel => {
   const key = label.toLowerCase().replace(/[-_\s]/g, '');
-  if (key === 'feat' || key === 'feature' || key === 'enhancement') return 'feature';
+  if (key === 'feat' || key === 'feature' || key === 'enhancement')
+    return 'feature';
   if (key === 'bug') return 'bug';
   if (key === 'doc' || key === 'docs' || key === 'documentation') return 'doc';
   if (key === 'typo') return 'typo';
@@ -155,7 +156,6 @@ export const createGitHubService = (token: string) => {
     },
   });
 
-  
   /**
    * 대상 저장소에서 모든 이슈 데이터를 조회합니다.
    * * GraphQL 기반의 cursor 페이지네이션을 이용하여 모든 페이지의 데이터를 순회 수집합니다.
@@ -215,7 +215,7 @@ export const createGitHubService = (token: string) => {
 
       // OPEN 상태이거나 CLOSE된 상태 중에서도 정상적으로 종료된(COMPLETED) 이슈만 유효한 데이터로 필터링합니다.
       const validNodes = connection.nodes.filter(
-        node => node.state === 'OPEN' || node.stateReason === 'COMPLETED'
+        node => node.state === 'OPEN' || node.stateReason === 'COMPLETED',
       );
 
       issues.push(...validNodes.map(toIssueRecord));

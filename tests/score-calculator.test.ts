@@ -1,6 +1,6 @@
 import {describe, test, expect} from 'bun:test';
-import {ScoreCalculator, type RepoData} from '../score-calculator';
-import type {DetailedRepoData} from '../types';
+import {ScoreCalculator, type RepoData} from '../src/core/score-calculator';
+import type {DetailedRepoData} from '../src/types';
 
 /**
  * ScoreCalculator 클래스의 기능에 대한 단위 테스트입니다.
@@ -177,7 +177,7 @@ describe('ScoreCalculator 단위 테스트', () => {
   });
 
   /**
-   * 산출된 사용자별 데이터(IssuePrData)를 바탕으로 각 항목별 가중치 적용 및 
+   * 산출된 사용자별 데이터(IssuePrData)를 바탕으로 각 항목별 가중치 적용 및
    * 어뷰징 방지용 상한선(Capping) 제한 규칙이 정상적으로 동작하는지 검증합니다.
    */
   describe('최종 점수(totalScore) 및 제한 규칙 계산', () => {
@@ -193,7 +193,7 @@ describe('ScoreCalculator 단위 테스트', () => {
     };
 
     /**
-     * PR 및 이슈 개수가 어뷰징 제한 기준 미만일 때, 
+     * PR 및 이슈 개수가 어뷰징 제한 기준 미만일 때,
      * 각 카테고리별 기본 가중치가 정상적으로 곱해져 점수가 산출되는지 검증합니다.
      */
     test('기본 가중치가 정상적으로 적용되는지 검증 (PR 및 이슈 조건이 제한선 미만일 때)', () => {
@@ -218,7 +218,7 @@ describe('ScoreCalculator 단위 테스트', () => {
     });
 
     /**
-     * 문서(Docs) 및 오타(Typo) 수정 PR의 점수 인정 개수가 
+     * 문서(Docs) 및 오타(Typo) 수정 PR의 점수 인정 개수가
      * 기능(Feature) 및 버그(Bug) 수정 PR 개수에서 파생된 한도 내에서만 제한적으로 반영되는지 검증합니다.
      */
     test('Docs/Typo PR 제한 규칙: Feature/Bug PR 개수 기반 인정 한도를 초과하면 상한선까지만 점수가 인정되어야 한다', () => {
@@ -242,7 +242,7 @@ describe('ScoreCalculator 단위 테스트', () => {
     });
 
     /**
-     * 반영된 유효 PR의 총 개수를 기반으로, 이슈 인정 개수가 (유효 PR 수 * 4)로 
+     * 반영된 유효 PR의 총 개수를 기반으로, 이슈 인정 개수가 (유효 PR 수 * 4)로
      * 제한되는 어뷰징 방지 규칙이 동작하는지 검증합니다.
      */
     test('Issue 인정 개수 제한 규칙: 유효 PR 총합 개수의 4배를 초과한 이슈는 점수 산정에서 누락되어야 한다', () => {
@@ -291,12 +291,12 @@ describe('ScoreCalculator 단위 테스트', () => {
   });
 
   /**
-   * 둘 이상의 저장소를 분석할 때 각 저장소에 흩어진 사용자 기여 기록을 
+   * 둘 이상의 저장소를 분석할 때 각 저장소에 흩어진 사용자 기여 기록을
    * 통합하여 올바르게 최종 점수로 환산하는지 검증합니다.
    */
   describe('calculateUserScores() 다중 저장소 합산 규칙', () => {
     /**
-     * 동일한 유저가 여러 저장소에 기여한 기록이 있을 때, 먼저 전체 기여 횟수가 합산된 후 
+     * 동일한 유저가 여러 저장소에 기여한 기록이 있을 때, 먼저 전체 기여 횟수가 합산된 후
      * 최종 점수 캡핑(상한선) 규칙이 전체 통합본을 기준으로 정상적으로 적용되는지 검증합니다.
      */
     test('동일한 사용자가 여러 저장소에 기여했을 때 데이터 카운트가 합산된 후 최종 점수 캡핑 규칙이 먹혀야 한다', () => {

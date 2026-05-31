@@ -1,4 +1,4 @@
-import type {DetailedRepoData} from './types';
+import type {DetailedRepoData} from '../types';
 
 /**
  * 사용자별 이슈와 PR 기여 개수를 나타내는 점수 계산용 데이터입니다.

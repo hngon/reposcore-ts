@@ -1,7 +1,7 @@
 import {mkdir} from 'node:fs/promises';
-import {countByCategory} from './github-service';
-import type {DetailedRepoData} from './types';
-import type {UserScore} from './score-calculator';
+import {countByCategory} from '../services/github-service';
+import type {DetailedRepoData} from '../types';
+import type {UserScore} from '../core/score-calculator';
 
 const DEFAULT_OUTPUT_DIR = 'output';
 const CSV_FILENAME = 'scores.csv';
