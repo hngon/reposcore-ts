@@ -30,7 +30,7 @@ jobs:
         run: bun install
 
       - name: Install jinja2
-        run: pip install jinja2
+        run: pip install jinja2 jinja2-cli
 
       - name: Run docs README generation
         env:

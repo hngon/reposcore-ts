@@ -25,7 +25,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install jinja2
-        run: pip install jinja2
+        run: pip install jinja2 jinja2-cli
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v1
