@@ -7,6 +7,9 @@ const DEFAULT_OUTPUT_DIR = 'output';
 const CSV_FILENAME = 'scores.csv';
 const TXT_FILENAME = 'scores.txt';
 
+export const supportedFormats = ['csv', 'txt'] as const;
+export type SupportedFormat = (typeof supportedFormats)[number];
+
 export interface RepoSummary {
   repoPath: string;
   mergedPrFeatureBug: number;
@@ -169,7 +172,7 @@ export interface ScoreOutputData {
  * @returns 작성이 완료된 파일들의 경로 정보를 담은 Promise 객체
  */
 export const writeOutputFiles = async (
-  format: 'csv' | 'txt',
+  format: SupportedFormat,
   data: ScoreOutputData,
   outputDir: string = DEFAULT_OUTPUT_DIR,
   subDir?: string,

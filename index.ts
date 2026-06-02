@@ -2,8 +2,8 @@ import {cac} from 'cac';
 import pkg from './package.json' with {type: 'json'};
 
 import {createGitHubService} from './src/github-service';
-import {ScoreCalculator, type RepoData} from './src/score-calculator';
-import {summarizeRepo, writeOutputFiles, type RepoSummary} from './src/output';
+import { ScoreCalculator, type RepoData } from './src/score-calculator';
+import { summarizeRepo, writeOutputFiles, supportedFormats, type SupportedFormat, type RepoSummary } from './src/output';
 import {
   sortUserScores,
   supportedSortBys,
@@ -14,9 +14,6 @@ import {
 
 const cli = cac('reposcore-ts');
 cli.version(pkg.version);
-
-const supportedFormats = ['csv', 'txt'] as const;
-type SupportedFormat = (typeof supportedFormats)[number];
 
 function parseRepoPath(repoPath: string) {
   const parts = repoPath.split('/');
