@@ -2,15 +2,8 @@ import {cac} from 'cac';
 import pkg from './package.json' with {type: 'json'};
 
 import {createGitHubService} from './src/github-service';
-import {
-  ScoreCalculator,
-  type RepoData,
-} from './src/score-calculator';
-import {
-  summarizeRepo,
-  writeOutputFiles,
-  type RepoSummary,
-} from './src/output';
+import {ScoreCalculator, type RepoData} from './src/score-calculator';
+import {summarizeRepo, writeOutputFiles, type RepoSummary} from './src/output';
 import {
   sortUserScores,
   supportedSortBys,
