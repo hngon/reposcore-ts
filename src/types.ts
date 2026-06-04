@@ -75,6 +75,17 @@ export interface IssueRecord extends BaseRecord {
 }
 
 /**
+ * GitHub API에서 상세 저장소 데이터를 가져오는 핵심 서비스 인터페이스.
+ */
+export interface GitHubServiceCore {
+  getDetailedRepoData(
+    owner: string,
+    repoName: string,
+    useCache: boolean,
+  ): Promise<DetailedRepoData>;
+}
+
+/**
  * 한 저장소에서 수집한 상세 데이터. 점수 계산의 입력으로 사용됩니다.
  */
 export interface DetailedRepoData {
@@ -101,7 +112,9 @@ export interface RepoClaims {
   unclaimed: ClaimInfo[];
 }
 
-/** 선점 현황 조회를 위한 서비스 인터페이스 확장 */
+/**
+ * 선점 현황 조회를 위한 서비스 인터페이스.
+ */
 export interface ClaimService {
   getRecentClaimsData(
     owner: string,
@@ -110,3 +123,9 @@ export interface ClaimService {
     repoPath: string,
   ): Promise<RepoClaims>;
 }
+
+/**
+ * 모든 GitHub 서비스 기능을 포함하는 통합 인터페이스.
+ * `createGitHubService` 함수가 반환해야 하는 타입입니다.
+ */
+export type FullGitHubService = GitHubServiceCore & ClaimService;

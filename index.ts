@@ -18,7 +18,7 @@ import {
   type SupportedSortBy,
   type SupportedSortOrder,
 } from './src/sort';
-import {type ClaimService} from './src/types';
+import {type FullGitHubService} from './src/types';
 
 const cli = cac('reposcore-ts');
 cli.version(pkg.version);
@@ -55,7 +55,7 @@ cli
     default: 'desc',
   })
   .option('--claims', '최근 이슈 선점 현황을 조회합니다')
-  .option('--keywords <items>', '이슈 선점 키워드 목록(쉼표 구분)', {
+  .option('--keywords [items]', '이슈 선점 키워드 목록(쉼표 구분)', {
     default: '제가 하겠습니다,진행하겠습니다,할게요,I\'ll take this',
   })
   .action(
@@ -88,12 +88,11 @@ cli
       const errors: string[] = [];
 
       const isClaimsMode = !!options.claims;
-      const claimKeywords = options.keywords
-        ? String(options.keywords)
-            .split(',')
-            .map(k => k.trim())
-            .filter(Boolean)
-        : ['제가 하겠습니다', '진행하겠습니다', '할게요', "I'll take this"];
+      const DEFAULT_KEYWORDS = ['제가 하겠습니다', '진행하겠습니다', '할게요', "I'll take this"];
+
+      const claimKeywords = typeof options.keywords === 'string'
+        ? options.keywords.split(',').map(k => k.trim()).filter(Boolean)
+        : DEFAULT_KEYWORDS;
 
       const parsedRepos: {
         repoPath: string;
@@ -159,13 +158,12 @@ cli
         process.exit(1);
       }
 
-      const githubService = createGitHubService(token);
+      const githubService = createGitHubService(token) as FullGitHubService;
 
       if (isClaimsMode) {
         for (const {repoPath, owner, repoName} of parsedRepos) {
           try {
-            // getRecentClaimsData는 github-service.ts에 구현되어야 합니다.
-            const claims = await (githubService as unknown as ClaimService).getRecentClaimsData(
+            const claims = await githubService.getRecentClaimsData(
               owner,
               repoName,
               claimKeywords,

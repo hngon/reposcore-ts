@@ -317,21 +317,6 @@ export const writeOutputFiles = async (
   return written;
 };
 
-/** 상대적인 시간 표시를 위한 헬퍼 함수 */
-const formatRelativeTime = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return '방금 전';
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes}분 전`;
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours}시간 전`;
-  const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays}일 전`;
-};
-
 /**
  * 이슈 제목을 기반으로 작업 유형 및 기한(시간)을 결정합니다.
  * issue-pr-guide.md의 규칙을 따릅니다.
