@@ -1,7 +1,7 @@
-.PHONY: all docs synopsis 
+.PHONY: all docs synopsis
 
 PYTHON ?= python3
-JINJA2 ?= jinja2
+JINJA2 ?= python3 -m jinja2cli
 
 DOCS_MD := $(filter-out docs/README.md docs/README-template.md, $(wildcard docs/*.md))
 
