@@ -9,6 +9,7 @@ import {
   supportedFormats,
   type SupportedFormat,
   type RepoSummary,
+  printClaims,
 } from './src/output';
 import {
   sortUserScores,
@@ -17,6 +18,7 @@ import {
   type SupportedSortBy,
   type SupportedSortOrder,
 } from './src/sort';
+import {type FullGitHubService} from './src/types';
 
 const cli = cac('reposcore-ts');
 cli.version(pkg.version);
@@ -52,6 +54,10 @@ cli
   .option('--sort-order <order>', '정렬 방식 (asc, desc)', {
     default: 'desc',
   })
+  .option('--claims', '최근 이슈 선점 현황을 조회합니다')
+  .option('--keywords [items]', '이슈 선점 키워드 목록(쉼표 구분)', {
+    default: '제가 하겠습니다,진행하겠습니다,할게요,I\'ll take this',
+  })
   .action(
     async (
       repos: string[],
@@ -62,6 +68,8 @@ cli
         outputDir?: string;
         sortBy: string;
         sortOrder: string;
+        claims?: boolean;
+        keywords?: string;
       },
     ) => {
       const token =
@@ -78,6 +86,14 @@ cli
       const sortBy = String(options.sortBy || 'score').toLowerCase();
       const sortOrder = String(options.sortOrder || 'desc').toLowerCase();
       const errors: string[] = [];
+
+      const isClaimsMode = !!options.claims;
+      const DEFAULT_KEYWORDS = ['제가 하겠습니다', '진행하겠습니다', '할게요', "I'll take this"];
+
+      const claimKeywords = typeof options.keywords === 'string'
+        ? options.keywords.split(',').map(k => k.trim()).filter(Boolean)
+        : DEFAULT_KEYWORDS;
+
       const parsedRepos: {
         repoPath: string;
         owner: string;
@@ -142,10 +158,29 @@ cli
         process.exit(1);
       }
 
+      const githubService = createGitHubService(token) as FullGitHubService;
+
+      if (isClaimsMode) {
+        for (const {repoPath, owner, repoName} of parsedRepos) {
+          try {
+            const claims = await githubService.getRecentClaimsData(
+              owner,
+              repoName,
+              claimKeywords,
+              repoPath,
+            );
+            printClaims(claims);
+          } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : String(error);
+            console.error(`오류: '${repoPath}'의 선점 현황을 조회할 수 없습니다. (${msg})`);
+          }
+        }
+        return;
+      }
+
       console.error(`형식: ${formats.join(', ')}`);
       console.error(`저장소: ${repos.join(', ')}`);
 
-      const githubService = createGitHubService(token);
       const repoDataList: RepoData[] = [];
       const repoSummaries: RepoSummary[] = [];
 

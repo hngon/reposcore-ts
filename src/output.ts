@@ -1,6 +1,6 @@
 import {mkdir} from 'node:fs/promises';
 import {countByCategory} from './github-service';
-import type {DetailedRepoData} from './types';
+import type {DetailedRepoData, RepoClaims} from './types';
 import type {UserScore} from './score-calculator';
 
 const DEFAULT_OUTPUT_DIR = 'output';
@@ -315,4 +315,77 @@ export const writeOutputFiles = async (
   }
 
   return written;
+};
+
+/**
+ * 이슈 제목을 기반으로 작업 유형 및 기한(시간)을 결정합니다.
+ * issue-pr-guide.md의 규칙을 따릅니다.
+ */
+const getTaskDeadline = (title: string): {type: string; hours: number} => {
+  const lowerTitle = title.toLowerCase();
+  // 문서 작업 키워드: docs, readme, 문서, 오타, typo 등
+  const isDoc = /docs|readme|문서|오타|typo/i.test(lowerTitle);
+
+  return isDoc
+    ? {type: '📝 문서', hours: 24}
+    : {type: '💻 코드', hours: 48};
+};
+
+/**
+ * 기한 대비 남은 시간 또는 초과 여부를 계산하여 상태 문자열을 반환합니다.
+ */
+const getDeadlineStatus = (
+  claimedAt: string,
+  deadlineHours: number,
+): string => {
+  const start = new Date(claimedAt).getTime();
+  const now = new Date().getTime();
+  const deadline = start + deadlineHours * 60 * 60 * 1000;
+  const remaining = deadline - now;
+
+  if (remaining <= 0) {
+    const overdueHours = Math.floor(Math.abs(remaining) / (1000 * 60 * 60));
+    return `⚠️ 기한 초과 (${overdueHours}시간 경과 - 재선점 가능)`;
+  }
+
+  const h = Math.floor(remaining / (1000 * 60 * 60));
+  const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+  return `⏳ 남은 시간: ${h}시간 ${m}분`;
+};
+
+/**
+ * 선점 현황 데이터를 표준 출력(stdout)에 사람이 읽기 좋은 형태로 출력합니다.
+ *
+ * @param claims 저장소별 선점 및 미선점 이슈 정보
+ */
+export const printClaims = (claims: RepoClaims): void => {
+  console.log(`\n[${claims.repoPath}]`);
+
+  console.log('선점된 이슈');
+  if (claims.claimed.length === 0) {
+    console.log('  (없음)');
+  } else {
+    for (const c of claims.claimed) {
+      console.log(`- #${c.issueNumber} ${c.title}`);
+      console.log(`  URL: ${c.url}`);
+      if (c.claimedAt) {
+        const {type, hours} = getTaskDeadline(c.title);
+        const status = getDeadlineStatus(c.claimedAt, hours);
+        console.log(`  선점자: ${c.claimedBy}`);
+        console.log(`  상태: ${type} [${hours}시간 기한] | ${status}`);
+      } else {
+        console.log(`  선점자: ${c.claimedBy}`);
+      }
+    }
+  }
+
+  console.log('\n미선점 이슈');
+  if (claims.unclaimed.length === 0) {
+    console.log('  (없음)');
+  } else {
+    for (const u of claims.unclaimed) {
+      console.log(`- #${u.issueNumber} ${u.title}`);
+      console.log(`  URL: ${u.url}`);
+    }
+  }
 };

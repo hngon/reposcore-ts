@@ -47,6 +47,8 @@ Options:
   --no-cache            캐시를 무시하고 GitHub API를 새로 호출합니다 (default: true)
   --sort-by <field>     정렬 기준 (score, id) (default: score)
   --sort-order <order>  정렬 방식 (asc, desc) (default: desc)
+  --claims              최근 이슈 선점 현황을 조회합니다 
+  --keywords [items]    이슈 선점 키워드 목록(쉼표 구분) (default: 제가 하겠습니다,진행하겠습니다,할게요,I'll take this)
   -v, --version         Display version number 
   -h, --help            Display this message
 ```

@@ -3,11 +3,32 @@ import {graphql} from '@octokit/graphql';
 import type {
   ContributionLabel,
   DetailedRepoData,
+  ClaimInfo,
+  RepoClaims,
   IssueRecord,
   PRRecord,
 } from './types';
 
 import {loadCache, saveCache} from './cache';
+
+interface ClaimsPageResponse {
+  repository: {
+    issues: {
+      nodes: {
+        number: number;
+        title: string;
+        url: string;
+        comments: {
+          nodes: {
+            body: string;
+            author: {login: string} | null;
+            createdAt: string;
+          }[];
+        };
+      }[];
+    };
+  };
+}
 
 type RawIssue = Omit<IssueRecord, 'category'>;
 type RawPullRequest = Omit<PRRecord, 'category'>;
@@ -442,7 +463,81 @@ export const createGitHubService = (token: string) => {
     return data;
   };
 
+  /**
+   * 열린 이슈와 최근 댓글을 조회하여 선점 키워드가 포함된 이슈를 분류합니다.
+   */
+  const getRecentClaimsData = async (
+    owner: string,
+    repo: string,
+    keywords: string[],
+    repoPath: string,
+  ): Promise<RepoClaims> => {
+    const response = await githubGraphQL<ClaimsPageResponse>(
+      `
+      query($owner: String!, $repo: String!) {
+        repository(owner: $owner, name: $repo) {
+          issues(first: 50, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
+            nodes {
+              number
+              title
+              url
+              comments(last: 10) {
+                nodes {
+                  body
+                  author { login }
+                  createdAt
+                }
+              }
+            }
+          }
+        }
+      }
+      `,
+      {owner, repo},
+    );
+
+    const nodes = response.repository.issues.nodes;
+    const claimed: ClaimInfo[] = [];
+    const unclaimed: ClaimInfo[] = [];
+
+    for (const node of nodes) {
+      let matchedClaim: {claimer: string; keyword: string; createdAt: string} | null = null;
+      // 최신 댓글부터 확인하여 가장 최근 선점 선언을 찾습니다.
+      const comments = [...node.comments.nodes].reverse();
+
+      for (const comment of comments) {
+        const foundKeyword = keywords.find(k => comment.body.includes(k));
+        if (foundKeyword) {
+          matchedClaim = {
+            claimer: comment.author?.login ?? 'unknown',
+            keyword: foundKeyword,
+            createdAt: comment.createdAt,
+          };
+          break;
+        }
+      }
+
+      const info: ClaimInfo = {
+        issueNumber: node.number,
+        title: node.title,
+        url: node.url,
+        claimedBy: matchedClaim?.claimer ?? null,
+        matchedKeyword: matchedClaim?.keyword ?? null,
+        claimedAt: matchedClaim?.createdAt ?? null,
+      };
+
+      if (matchedClaim) {
+        claimed.push(info);
+      } else {
+        unclaimed.push(info);
+      }
+    }
+
+    return {repoPath, claimed, unclaimed};
+  };
+
   return {
     getDetailedRepoData,
+    getRecentClaimsData,
   };
 };
