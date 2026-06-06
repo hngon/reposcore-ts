@@ -425,9 +425,7 @@ const getTaskDeadline = (title: string): {type: string; hours: number} => {
   // 문서 작업 키워드: docs, readme, 문서, 오타, typo 등
   const isDoc = /docs|readme|문서|오타|typo/i.test(lowerTitle);
 
-  return isDoc
-    ? {type: '📝 문서', hours: 24}
-    : {type: '💻 코드', hours: 48};
+  return isDoc ? {type: '📝 문서', hours: 24} : {type: '💻 코드', hours: 48};
 };
 
 /**

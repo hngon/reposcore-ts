@@ -56,7 +56,7 @@ cli
   })
   .option('--claims', '최근 이슈 선점 현황을 조회합니다')
   .option('--keywords [items]', '이슈 선점 키워드 목록(쉼표 구분)', {
-    default: '제가 하겠습니다,진행하겠습니다,할게요,I\'ll take this',
+    default: "제가 하겠습니다,진행하겠습니다,할게요,I'll take this",
   })
   .action(
     async (
@@ -88,11 +88,20 @@ cli
       const errors: string[] = [];
 
       const isClaimsMode = !!options.claims;
-      const DEFAULT_KEYWORDS = ['제가 하겠습니다', '진행하겠습니다', '할게요', "I'll take this"];
+      const DEFAULT_KEYWORDS = [
+        '제가 하겠습니다',
+        '진행하겠습니다',
+        '할게요',
+        "I'll take this",
+      ];
 
-      const claimKeywords = typeof options.keywords === 'string'
-        ? options.keywords.split(',').map(k => k.trim()).filter(Boolean)
-        : DEFAULT_KEYWORDS;
+      const claimKeywords =
+        typeof options.keywords === 'string'
+          ? options.keywords
+              .split(',')
+              .map(k => k.trim())
+              .filter(Boolean)
+          : DEFAULT_KEYWORDS;
 
       const parsedRepos: {
         repoPath: string;
@@ -172,14 +181,16 @@ cli
             printClaims(claims);
           } catch (error: unknown) {
             const msg = error instanceof Error ? error.message : String(error);
-            console.error(`오류: '${repoPath}'의 선점 현황을 조회할 수 없습니다. (${msg})`);
+            console.error(
+              `오류: '${repoPath}'의 선점 현황을 조회할 수 없습니다. (${msg})`,
+            );
           }
         }
         return;
       }
 
-      console.error(`형식: ${formats.join(', ')}`);
-      console.error(`저장소: ${repos.join(', ')}`);
+      console.log(`형식: ${formats.join(', ')}`);
+      console.log(`저장소: ${repos.join(', ')}`);
 
       const repoDataList: RepoData[] = [];
       const repoSummaries: RepoSummary[] = [];
@@ -218,12 +229,12 @@ cli
             outputDir,
             subDir,
           );
-          console.error(`[${repoPath}] CSV 저장: ${written.csv}`);
+          console.log(`[${repoPath}] CSV 저장: ${written.csv}`);
           if (written.txt) {
-            console.error(`[${repoPath}] TXT 저장: ${written.txt}`);
+            console.log(`[${repoPath}] TXT 저장: ${written.txt}`);
           }
           if (written.html) {
-            console.error(`[${repoPath}] HTML 저장: ${written.html}`);
+            console.log(`[${repoPath}] HTML 저장: ${written.html}`);
           }
         } catch (error: unknown) {
           const errorMessage =
@@ -249,12 +260,12 @@ cli
         },
         outputDir,
       );
-      console.error(`[합산] CSV 저장: ${written.csv}`);
+      console.log(`[합산] CSV 저장: ${written.csv}`);
       if (written.txt) {
-        console.error(`[합산] TXT 저장: ${written.txt}`);
+        console.log(`[합산] TXT 저장: ${written.txt}`);
       }
       if (written.html) {
-        console.error(`[합산] HTML 저장: ${written.html}`);
+        console.log(`[합산] HTML 저장: ${written.html}`);
       }
     },
   );

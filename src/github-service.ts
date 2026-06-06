@@ -501,7 +501,11 @@ export const createGitHubService = (token: string) => {
     const unclaimed: ClaimInfo[] = [];
 
     for (const node of nodes) {
-      let matchedClaim: {claimer: string; keyword: string; createdAt: string} | null = null;
+      let matchedClaim: {
+        claimer: string;
+        keyword: string;
+        createdAt: string;
+      } | null = null;
       // 최신 댓글부터 확인하여 가장 최근 선점 선언을 찾습니다.
       const comments = [...node.comments.nodes].reverse();
 
