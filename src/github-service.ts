@@ -26,7 +26,7 @@ interface ClaimsPageResponse {
           }[];
         };
       }[];
-      pageInfo: PageInfo; // 🚀 버그 수정: 페이지네이션을 위한 pageInfo 타입 추가
+      pageInfo: PageInfo;
     };
   };
 }
@@ -466,7 +466,6 @@ export const createGitHubService = (token: string) => {
 
   /**
    * 열린 이슈와 최근 댓글을 조회하여 선점 키워드가 포함된 이슈를 분류합니다.
-   * 🚀 버그 수정: while 루프와 cursor 패턴을 도입하여 50개 제한 없는 전체 페이지네이션 달성
    */
   const getRecentClaimsData = async (
     owner: string,
