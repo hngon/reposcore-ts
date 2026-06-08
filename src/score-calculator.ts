@@ -178,6 +178,34 @@ export class ScoreCalculator {
   }
 
   /**
+   * 이슈 요구사항: 외부 출력 모듈에서도 동일한 연산을 수행할 수 있도록 분리 추출한 공통 유저 데이터 누적 합산 함수
+   * @param user 모든 저장소 점수 내역을 가진 단일 유저 스코어 객체
+   * @returns 각 필드별 기여도가 최종 .reduce로 합산 완료된 단일 IssuePrData 객체
+   */
+  static getAccumulatedContributions(user: UserScore): IssuePrData {
+    return user.repoScores
+      .flatMap(repo => repo.scoreData)
+      .reduce(
+        (acc, current) => ({
+          userId: acc.userId || current.userId,
+          prFeatureBug: acc.prFeatureBug + current.prFeatureBug,
+          prDocs: acc.prDocs + current.prDocs,
+          prTypo: acc.prTypo + current.prTypo,
+          issueFeatureBug: acc.issueFeatureBug + current.issueFeatureBug,
+          issueDocs: acc.issueDocs + current.issueDocs,
+        }),
+        {
+          userId: user.userId,
+          prFeatureBug: 0,
+          prDocs: 0,
+          prTypo: 0,
+          issueFeatureBug: 0,
+          issueDocs: 0,
+        } as IssuePrData,
+      );
+  }
+
+  /**
    * 여러 저장소의 점수 계산 데이터를 사용자별로 집계하고 최종 점수를 계산합니다.
    *
    * @param repos 저장소별 점수 계산 데이터 목록
@@ -208,26 +236,8 @@ export class ScoreCalculator {
     }
 
     return Array.from(byUser.entries()).map(([userId, repoScores]) => {
-      const aggregated = repoScores
-        .flatMap(repo => repo.scoreData)
-        .reduce(
-          (acc, current) => ({
-            userId: acc.userId || current.userId,
-            prFeatureBug: acc.prFeatureBug + current.prFeatureBug,
-            prDocs: acc.prDocs + current.prDocs,
-            prTypo: acc.prTypo + current.prTypo,
-            issueFeatureBug: acc.issueFeatureBug + current.issueFeatureBug,
-            issueDocs: acc.issueDocs + current.issueDocs,
-          }),
-          {
-            userId,
-            prFeatureBug: 0,
-            prDocs: 0,
-            prTypo: 0,
-            issueFeatureBug: 0,
-            issueDocs: 0,
-          } as IssuePrData,
-        );
+      const dummyUser: UserScore = { userId, repoScores, totalScore: 0 };
+      const aggregated = ScoreCalculator.getAccumulatedContributions(dummyUser);
 
       return {
         userId,

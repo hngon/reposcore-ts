@@ -1,7 +1,7 @@
 import {mkdir} from 'node:fs/promises';
 import {countByCategory} from './github-service';
 import type {DetailedRepoData, RepoClaims} from './types';
-import type {UserScore} from './score-calculator';
+import {ScoreCalculator, type UserScore} from './score-calculator'; // ScoreCalculator 클래스 임포트 추가
 
 const DEFAULT_OUTPUT_DIR = 'output';
 const CSV_FILENAME = 'scores.csv';
@@ -91,29 +91,15 @@ interface UserContributionCounts {
 }
 
 const aggregateUserContribution = (user: UserScore): UserContributionCounts => {
-  let prFeatureBug = 0;
-  let prDocs = 0;
-  let prTypo = 0;
-  let issueFeatureBug = 0;
-  let issueDocs = 0;
-
-  for (const repo of user.repoScores) {
-    for (const data of repo.scoreData) {
-      prFeatureBug += data.prFeatureBug;
-      prDocs += data.prDocs;
-      prTypo += data.prTypo;
-      issueFeatureBug += data.issueFeatureBug;
-      issueDocs += data.issueDocs;
-    }
-  }
+  const aggregated = ScoreCalculator.getAccumulatedContributions(user);
 
   return {
     userId: user.userId,
-    prFeatureBug,
-    prDocs,
-    prTypo,
-    issueFeatureBug,
-    issueDocs,
+    prFeatureBug: aggregated.prFeatureBug,
+    prDocs: aggregated.prDocs,
+    prTypo: aggregated.prTypo,
+    issueFeatureBug: aggregated.issueFeatureBug,
+    issueDocs: aggregated.issueDocs,
     totalScore: user.totalScore,
   };
 };
@@ -219,13 +205,13 @@ export const buildUserScoresTxt = (
     if (rejectedPr > 0 || rejectedIssue > 0) {
       const userRejections = [
         `${row.userId}:`,
-        `   [미인정 항목] 문서/오타 PR ${rejectedPr}개 초과(한도 ${maxAdditionalPr}개) / 이슈 ${rejectedIssue}개 초과(한도 ${maxIssueCount}개)`,
+        `    [미인정 항목] 문서/오타 PR ${rejectedPr}개 초과(한도 ${maxAdditionalPr}개) / 이슈 ${rejectedIssue}개 초과(한도 ${maxIssueCount}개)`,
       ];
 
       if (rejectedPr > 0) {
         const docSuggestionCount = Math.ceil(rejectedPr / 3);
         userRejections.push(
-          `   [추가 제안] 기능/버그 PR ${docSuggestionCount}개 추가 시 문서PR 인정 한도 +${docSuggestionCount * 3}`,
+          `    [추가 제안] 기능/버그 PR ${docSuggestionCount}개 추가 시 문서PR 인정 한도 +${docSuggestionCount * 3}`,
         );
       }
 
@@ -233,11 +219,11 @@ export const buildUserScoresTxt = (
         const issueSuggestionCount = Math.ceil(rejectedIssue / 4);
         if (totalDocTypoPr < maxAdditionalPr) {
           userRejections.push(
-            `   [추가 제안] 문서 PR ${issueSuggestionCount}개 추가 혹은 기능/버그 PR ${issueSuggestionCount}개 추가시 이슈 인정한도 +${issueSuggestionCount * 4}`,
+            `    [추가 제안] 문서 PR ${issueSuggestionCount}개 추가 혹은 기능/버그 PR ${issueSuggestionCount}개 추가시 이슈 인정한도 +${issueSuggestionCount * 4}`,
           );
         } else {
           userRejections.push(
-            `   [추가 제안] 기능/버그 PR ${issueSuggestionCount}개 추가시 이슈 인정한도 +${issueSuggestionCount * 4}`,
+            `    [추가 제안] 기능/버그 PR ${issueSuggestionCount}개 추가시 이슈 인정한도 +${issueSuggestionCount * 4}`,
           );
         }
       }
@@ -289,28 +275,16 @@ export const buildHtmlReport = (data: ScoreOutputData): string => {
 
   const userRows = data.userScores
     .map(user => {
-      let prFeatureBug = 0;
-      let prDocs = 0;
-      let prTypo = 0;
-      let issueFeatureBug = 0;
-      let issueDocs = 0;
-      for (const repo of user.repoScores) {
-        for (const scoreData of repo.scoreData) {
-          prFeatureBug += scoreData.prFeatureBug;
-          prDocs += scoreData.prDocs;
-          prTypo += scoreData.prTypo;
-          issueFeatureBug += scoreData.issueFeatureBug;
-          issueDocs += scoreData.issueDocs;
-        }
-      }
+      const aggregated = ScoreCalculator.getAccumulatedContributions(user);
+      
       return `
     <tr>
       <td>${user.userId}</td>
-      <td>${prFeatureBug}</td>
-      <td>${prDocs}</td>
-      <td>${prTypo}</td>
-      <td>${issueFeatureBug}</td>
-      <td>${issueDocs}</td>
+      <td>${aggregated.prFeatureBug}</td>
+      <td>${aggregated.prDocs}</td>
+      <td>${aggregated.prTypo}</td>
+      <td>${aggregated.issueFeatureBug}</td>
+      <td>${aggregated.issueDocs}</td>
       <td><strong>${user.totalScore}</strong></td>
     </tr>
     `;
@@ -422,10 +396,9 @@ export const writeOutputFiles = async (
  */
 const getTaskDeadline = (title: string): {type: string; hours: number} => {
   const lowerTitle = title.toLowerCase();
-  // 문서 작업 키워드: docs, readme, 문서, 오타, typo 등
   const isDoc = /docs|readme|문서|오타|typo/i.test(lowerTitle);
 
-  return isDoc ? {type: '📝 문서', hours: 24} : {type: '💻 코드', hours: 48};
+  return isDoc ? {type: '문서', hours: 24} : {type: '코드', hours: 48};
 };
 
 /**
@@ -442,12 +415,12 @@ const getDeadlineStatus = (
 
   if (remaining <= 0) {
     const overdueHours = Math.floor(Math.abs(remaining) / (1000 * 60 * 60));
-    return `⚠️ 기한 초과 (${overdueHours}시간 경과 - 재선점 가능)`;
+    return `기한 초과 (${overdueHours}시간 경과 - 재선점 가능)`;
   }
 
   const h = Math.floor(remaining / (1000 * 60 * 60));
   const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-  return `⏳ 남은 시간: ${h}시간 ${m}분`;
+  return `남은 시간: ${h}시간 ${m}분`;
 };
 
 /**
