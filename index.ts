@@ -184,7 +184,7 @@ cli
         process.exit(1);
       }
 
-      const githubService = createGitHubService(token, pageSize) as FullGitHubService;
+      const githubService = createGitHubService(token) as FullGitHubService;
 
       if (isClaimsMode) {
         for (const {repoPath, owner, repoName} of parsedRepos) {

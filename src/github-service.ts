@@ -26,6 +26,7 @@ interface ClaimsPageResponse {
           }[];
         };
       }[];
+      pageInfo: PageInfo; // 🚀 버그 수정: 페이지네이션을 위한 pageInfo 타입 추가
     };
   };
 }
@@ -69,6 +70,8 @@ interface PullRequestSearchResponse {
     pageInfo: PageInfo;
   };
 }
+
+const PAGE_SIZE = 100;
 
 export const normalizeLabel = (label: string): ContributionLabel => {
   const key = label.toLowerCase().replace(/[-_\s]/g, '');
@@ -168,7 +171,7 @@ export const countByCategory = (
   return counts;
 };
 
-export const createGitHubService = (token: string, pageSize = 100) => {
+export const createGitHubService = (token: string) => {
   const githubGraphQL = graphql.defaults({
     headers: {
       authorization: `token ${token}`,
@@ -218,7 +221,7 @@ export const createGitHubService = (token: string, pageSize = 100) => {
             }
           }
           `,
-          {owner, repo, pageSize, cursor},
+          {owner, repo, pageSize: PAGE_SIZE, cursor},
         );
 
       const connection: IssuePageResponse['repository']['issues'] =
@@ -282,7 +285,7 @@ export const createGitHubService = (token: string, pageSize = 100) => {
             }
           }
           `,
-          {owner, repo, pageSize, cursor},
+          {owner, repo, pageSize: PAGE_SIZE, cursor},
         );
 
       const connection: PullRequestPageResponse['repository']['pullRequests'] =
@@ -343,7 +346,7 @@ export const createGitHubService = (token: string, pageSize = 100) => {
           `,
           {
             searchQuery: `repo:${owner}/${repo} is:issue updated:>=${since}`,
-            pageSize,
+            pageSize: PAGE_SIZE,
             cursor,
           },
         );
@@ -408,7 +411,7 @@ export const createGitHubService = (token: string, pageSize = 100) => {
           `,
           {
             searchQuery: `repo:${owner}/${repo} is:pr is:merged updated:>=${since}`,
-            pageSize,
+            pageSize: PAGE_SIZE,
             cursor,
           },
         );
@@ -463,6 +466,7 @@ export const createGitHubService = (token: string, pageSize = 100) => {
 
   /**
    * 열린 이슈와 최근 댓글을 조회하여 선점 키워드가 포함된 이슈를 분류합니다.
+   * 🚀 버그 수정: while 루프와 cursor 패턴을 도입하여 50개 제한 없는 전체 페이지네이션 달성
    */
   const getRecentClaimsData = async (
     owner: string,
@@ -470,69 +474,82 @@ export const createGitHubService = (token: string, pageSize = 100) => {
     keywords: string[],
     repoPath: string,
   ): Promise<RepoClaims> => {
-    const response = await githubGraphQL<ClaimsPageResponse>(
-      `
-      query($owner: String!, $repo: String!) {
-        repository(owner: $owner, name: $repo) {
-          issues(first: 50, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
-            nodes {
-              number
-              title
-              url
-              comments(last: 10) {
-                nodes {
-                  body
-                  author { login }
-                  createdAt
+    const claimed: ClaimInfo[] = [];
+    const unclaimed: ClaimInfo[] = [];
+    let cursor: string | null = null;
+    let hasNextPage = true;
+
+    while (hasNextPage) {
+      const response: ClaimsPageResponse = await githubGraphQL<ClaimsPageResponse>(
+        `
+        query($owner: String!, $repo: String!, $pageSize: Int!, $cursor: String) {
+          repository(owner: $owner, name: $repo) {
+            issues(first: $pageSize, after: $cursor, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
+              nodes {
+                number
+                title
+                url
+                comments(last: 10) {
+                  nodes {
+                    body
+                    author { login }
+                    createdAt
+                  }
                 }
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
               }
             }
           }
         }
-      }
-      `,
-      {owner, repo},
-    );
+        `,
+        {owner, repo, pageSize: PAGE_SIZE, cursor},
+      );
 
-    const nodes = response.repository.issues.nodes;
-    const claimed: ClaimInfo[] = [];
-    const unclaimed: ClaimInfo[] = [];
+      const connection = response.repository.issues;
+      const nodes = connection.nodes;
 
-    for (const node of nodes) {
-      let matchedClaim: {
-        claimer: string;
-        keyword: string;
-        createdAt: string;
-      } | null = null;
-      // 최신 댓글부터 확인하여 가장 최근 선점 선언을 찾습니다.
-      const comments = [...node.comments.nodes].reverse();
+      for (const node of nodes) {
+        let matchedClaim: {
+          claimer: string;
+          keyword: string;
+          createdAt: string;
+        } | null = null;
+        
+        const comments = [...node.comments.nodes].reverse();
 
-      for (const comment of comments) {
-        const foundKeyword = keywords.find(k => comment.body.includes(k));
-        if (foundKeyword) {
-          matchedClaim = {
-            claimer: comment.author?.login ?? 'unknown',
-            keyword: foundKeyword,
-            createdAt: comment.createdAt,
-          };
-          break;
+        for (const comment of comments) {
+          const foundKeyword = keywords.find(k => comment.body.includes(k));
+          if (foundKeyword) {
+            matchedClaim = {
+              claimer: comment.author?.login ?? 'unknown',
+              keyword: foundKeyword,
+              createdAt: comment.createdAt,
+            };
+            break;
+          }
+        }
+
+        const info: ClaimInfo = {
+          issueNumber: node.number,
+          title: node.title,
+          url: node.url,
+          claimedBy: matchedClaim?.claimer ?? null,
+          matchedKeyword: matchedClaim?.keyword ?? null,
+          claimedAt: matchedClaim?.createdAt ?? null,
+      };
+
+        if (matchedClaim) {
+          claimed.push(info);
+        } else {
+          unclaimed.push(info);
         }
       }
 
-      const info: ClaimInfo = {
-        issueNumber: node.number,
-        title: node.title,
-        url: node.url,
-        claimedBy: matchedClaim?.claimer ?? null,
-        matchedKeyword: matchedClaim?.keyword ?? null,
-        claimedAt: matchedClaim?.createdAt ?? null,
-      };
-
-      if (matchedClaim) {
-        claimed.push(info);
-      } else {
-        unclaimed.push(info);
-      }
+      cursor = connection.pageInfo.endCursor;
+      hasNextPage = connection.pageInfo.hasNextPage && cursor !== null;
     }
 
     return {repoPath, claimed, unclaimed};
