@@ -82,6 +82,9 @@ export interface GitHubServiceCore {
     owner: string,
     repoName: string,
     useCache: boolean,
+    options?: {
+      since?: string;
+    },
   ): Promise<DetailedRepoData>;
 }
 
